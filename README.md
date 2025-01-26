@@ -21,7 +21,7 @@ This Terraform module deploys a self-healing Bastion server configured with Open
 | `vpc_id`           | VPC ID where the resources will be deployed.                                                     | `string`       | n/a                         |
 | `subnet_id`        | Subnet ID where the instances will be deployed.                                                  | `string`       | n/a                         |
 | `allowed_cidrs`    | List of CIDRs allowed for inbound traffic.                                                       | `list(string)` | `["0.0.0.0/0"]`             |
-| `open_ports`       | Map of ports to their protocols (e.g., `{22 = "tcp", 1194 = "tcp"}`).                         | `map(string)`  | `{22 = "tcp", 1194 = "udp"}` |            |
+| `open_ports`       | Map of ports to their protocols (e.g., `{ "tcp" = [22, 443] "udp" = [1194] }`).                  | `map(list(number))`  | default = { <br> &emsp tcp = [22] <br> &emsp udp = [1194] <br> } |            |
 | `s3_bucket_name`   | S3 bucket name for OpenVPN configuration backups.                                                | `string`       | `null`                      |
 | `scale_schedule`   | Scaling schedule for Auto Scaling Group in `morning_recurrence` and `night_recurrence` configurations.                 | `map(string)`  | {<br>&emsp;"enabled"            = "true "<br> &emsp;"morning_recurrence" = "0 9 * * 1-5" <br> &emsp;"night_recurrence"   = "0 18 * * 1-5" <br> }|
 | `morning_recurrence` | CRON expression for scaling up in the morning (UTC Time) | 0 9 * * 1-5 |
