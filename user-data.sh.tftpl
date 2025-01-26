@@ -1,0 +1,107 @@
+#!/bin/bash
+
+set -ex
+
+amazon-linux-extras install epel -y
+yum update -y
+yum install -y aws-cli openvpn easy-rsa iptables-services
+systemctl enable iptables
+
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+aws ec2 associate-address --instance-id $INSTANCE_ID --allocation-id ${eip_id} --region ${region}
+
+MARKER_FILE="/etc/openvpn/.configured"
+S3_BUCKET="${bucket}"
+BACKUP_PATH="openvpn-config"
+CONFIG_DIR="/etc/openvpn"
+
+aws s3 cp s3://$S3_BUCKET/$BACKUP_PATH/.configured $MARKER_FILE || echo "OpenVPN is not configured"
+
+if [ ! -f "$MARKER_FILE" ]; then
+  echo "First run detected. Setting up OpenVPN."
+
+  mkdir -p /etc/openvpn/easy-rsa
+  cp -r /usr/share/easy-rsa/3/* /etc/openvpn/easy-rsa
+  cd /etc/openvpn/easy-rsa
+  ./easyrsa init-pki
+  echo | ./easyrsa build-ca nopass
+  ./easyrsa gen-dh
+  export EASYRSA_BATCH=1
+  ./easyrsa gen-req server nopass
+  echo "yes" | ./easyrsa sign-req server server
+  ./easyrsa gen-req client nopass
+  echo "yes" | ./easyrsa sign-req client client
+  openvpn --genkey --secret /etc/openvpn/ta.key
+
+  mv pki/ca.crt pki/dh.pem pki/private/server.key pki/private/client.key pki/issued/server.crt pki/issued/client.crt /etc/openvpn/
+
+  cat <<EOF > /etc/openvpn/server.conf
+port 1194
+proto udp
+server 10.8.0.0 255.255.255.0
+dev tun
+ca ca.crt
+cert server.crt
+key server.key
+dh dh.pem
+tls-server
+tls-auth ta.key 0
+cipher AES-256-CBC
+auth SHA512
+keepalive 10 120
+persist-key
+persist-tun
+status openvpn-status.log
+log-append /var/log/openvpn.log
+verb 3
+push "route ${vpc_net} ${vpc_mask}"
+EOF
+
+  cat <<EOF > /etc/openvpn/client.ovpn
+client
+dev tun
+proto udp
+remote ${eip} 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+cipher AES-256-CBC
+auth SHA512
+key-direction 1
+verb 3
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(sed -ne '/BEGIN CERTIFICATE/,$ p' /etc/openvpn/client.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/client.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/ta.key)
+</tls-auth>
+EOF
+
+  echo "Backing up OpenVPN configuration to S3."
+  touch "$MARKER_FILE"
+  aws s3 cp $CONFIG_DIR s3://$S3_BUCKET/$BACKUP_PATH --recursive
+else
+  echo "OpenVPN already configured. Restoring from S3 backup."
+
+  aws s3 sync s3://$S3_BUCKET/$BACKUP_PATH $CONFIG_DIR
+  chmod -R 600 /etc/openvpn/*
+fi
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p
+iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $(ls /sys/class/net | egrep -v "lo|tun") -j MASQUERADE
+iptables-save > /etc/sysconfig/iptables
+systemctl start iptables
+systemctl enable iptables
+
+systemctl start openvpn@server
+systemctl enable openvpn@server
