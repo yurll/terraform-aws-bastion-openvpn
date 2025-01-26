@@ -31,18 +31,6 @@ variable "scale_schedule" {
 
 }
 
-# variable "morning_recurrence" {
-#   description = "CRON expression for scaling up in the morning"
-#   type        = string
-#   default     = "0 9 * * 1-5" # Default: Weekdays at 9 AM
-# }
-
-# variable "night_recurrence" {
-#   description = "CRON expression for scaling down at night"
-#   type        = string
-#   default     = "0 18 * * 1-5" # Default: Weekdays at 6 PM
-# }
-
 variable "open_ports" {
   description = <<EOT
 A map where keys are protocols (e.g., "tcp", "udp") and values are lists of ports to open.
