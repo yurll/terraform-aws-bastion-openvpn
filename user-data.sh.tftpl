@@ -55,6 +55,7 @@ status openvpn-status.log
 log-append /var/log/openvpn.log
 verb 3
 push "route ${vpc_net} ${vpc_mask}"
+${simultaneous_connections}
 EOF
 
   cat <<EOF > /etc/openvpn/client.ovpn
@@ -95,13 +96,12 @@ else
   chmod -R 600 /etc/openvpn/*
 fi
 
-echo 1 > /proc/sys/net/ipv4/ip_forward
 echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 sysctl -p
-iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $(ls /sys/class/net | egrep -v "lo|tun") -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $(ls /sys/class/net | grep -Ev "lo|tun") -j MASQUERADE
 iptables-save > /etc/sysconfig/iptables
 systemctl start iptables
 systemctl enable iptables
 
-systemctl start openvpn@server
-systemctl enable openvpn@server
+systemctl enable iptables --now
+systemctl enable openvpn@server --now

@@ -82,12 +82,13 @@ resource "aws_launch_template" "example" {
   instance_type = var.image_type
   key_name      = var.key_pair != null ? var.key_pair : aws_key_pair.generated[0].key_name
   user_data = base64encode(templatefile("${path.module}/user-data.sh.tftpl", {
-    eip_id   = aws_eip.example.id,
-    eip      = aws_eip.example.public_ip,
-    region   = data.aws_region.current.name,
-    bucket   = aws_s3_bucket.openvpn_backup.bucket,
-    vpc_net  = cidrhost(data.aws_vpc.main.cidr_block, 0),
-    vpc_mask = cidrnetmask(data.aws_vpc.main.cidr_block),
+    bucket                   = aws_s3_bucket.openvpn_backup.bucket,
+    eip                      = aws_eip.example.public_ip,
+    eip_id                   = aws_eip.example.id,
+    region                   = data.aws_region.current.name,
+    simultaneous_connections = local.simultaneous_connections,
+    vpc_net                  = cidrhost(data.aws_vpc.main.cidr_block, 0),
+    vpc_mask                 = cidrnetmask(data.aws_vpc.main.cidr_block),
   }))
 
   network_interfaces {

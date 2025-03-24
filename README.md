@@ -26,6 +26,7 @@ This Terraform module deploys a self-healing Bastion server configured with Open
 | `scale_schedule`   | Scaling schedule for Auto Scaling Group in `morning_recurrence` and `night_recurrence` configurations.                 | `map(string)`  | {<br>&emsp;"enabled"            = "true "<br> &emsp;"morning_recurrence" = "0 9 * * 1-5" <br> &emsp;"night_recurrence"   = "0 18 * * 1-5" <br> }|
 | `morning_recurrence` | CRON expression for scaling up in the morning (UTC Time) | 0 9 * * 1-5 |
 | `night_recurrence` | CRON expression for scaling down at night | 0 18 * * 1-5
+| `simultaneous_connections_enabled` | Enable simultaneous connections using the same certificate. This feature is disabled by default for security reasons | `bool` | `false`
 
 ## Outputs
 | Output                | Description                                |
@@ -47,12 +48,12 @@ module "bastion" {
     morning_recurrence = "0 9 * * 1-5"
     night_recurrence   = "0 18 * * 1-5"
   }
+  simultaneous_connections_enabled = false
   allowed_cidrs = ["192.168.1.0/24"]
   open_ports    = {
     22   = "tcp"
     1194 = "udp"
   }
-  vpn_subnet = "10.8.0.0/24"
   s3_bucket_name = "my-openvpn-backups"
 }
 ```
