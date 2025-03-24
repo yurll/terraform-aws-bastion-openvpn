@@ -25,4 +25,5 @@ data "aws_iam_policy_document" "assume_role_policy" {
 
 locals {
   effective_prefix = var.prefix_name != null ? var.prefix_name : "bastion-${random_string.prefix[0].result}"
+  simultaneous_connections = var.simultaneous_connections_enabled ? "duplicate-cn" : ""
 }

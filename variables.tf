@@ -59,3 +59,9 @@ variable "prefix_name" {
   type        = string
   default     = null
 }
+
+variable "simultaneous_connections_enabled" {
+  description = "Enable simultaneous connections limit"
+  type        = bool
+  default     = false
+}
