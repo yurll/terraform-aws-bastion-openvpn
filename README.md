@@ -27,12 +27,13 @@ This Terraform module deploys a self-healing Bastion server configured with Open
 | `morning_recurrence` | CRON expression for scaling up in the morning (UTC Time) | 0 9 * * 1-5 |
 | `night_recurrence` | CRON expression for scaling down at night | 0 18 * * 1-5
 | `simultaneous_connections_enabled` | Enable simultaneous connections using the same certificate. This feature is disabled by default for security reasons | `bool` | `false`
-| `additional_cidrs` | List of CIDRs that will be added to a VPN for routeing | `[]`
+| `additional_cidrs` | List of CIDRs that will be added to a VPN for routeing | `list(string)` | `[]` |
 
 ## Outputs
 | Output                | Description                                |
 |-----------------------|--------------------------------------------|
 | `private_key_pem`   | Generated private key data in PEM (RFC 1421) format |
+| `openvpn_security_group_id` | ID of the security group created for OpenVPN bastion host |
 
 ## Usage
 ```hcl
@@ -50,6 +51,7 @@ module "bastion" {
     night_recurrence   = "0 18 * * 1-5"
   }
   simultaneous_connections_enabled = false
+  additional_cidrs                 = ["10.1.0.0/16", "10.2.0.0/16"]
   allowed_cidrs = ["192.168.1.0/24"]
   open_ports    = {
     22   = "tcp"
