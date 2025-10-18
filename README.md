@@ -27,6 +27,7 @@ This Terraform module deploys a self-healing Bastion server configured with Open
 | `morning_recurrence` | CRON expression for scaling up in the morning (UTC Time) | 0 9 * * 1-5 |
 | `night_recurrence` | CRON expression for scaling down at night | 0 18 * * 1-5
 | `simultaneous_connections_enabled` | Enable simultaneous connections using the same certificate. This feature is disabled by default for security reasons | `bool` | `false`
+| `additional_cidrs` | List of CIDRs that will be added to a VPN for routeing | `[]`
 
 ## Outputs
 | Output                | Description                                |

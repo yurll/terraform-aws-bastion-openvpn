@@ -37,3 +37,4 @@ override.tf.json
 terraform.rc
 .vscode/
 example/.terraform.lock.hcl
+.DS_Store

@@ -24,6 +24,13 @@ data "aws_iam_policy_document" "assume_role_policy" {
 }
 
 locals {
-  effective_prefix = var.prefix_name != null ? var.prefix_name : "bastion-${random_string.prefix[0].result}"
+  effective_prefix         = var.prefix_name != null ? var.prefix_name : "bastion-${random_string.prefix[0].result}"
   simultaneous_connections = var.simultaneous_connections_enabled ? "duplicate-cn" : ""
+  push_routes = length(var.additional_cidrs) > 0 ? [
+    for cidr in var.additional_cidrs : format(
+      "push \"route %s %s\"",
+      split("/", cidr)[0],
+      cidrnetmask(cidr)
+    )
+  ] : []
 }

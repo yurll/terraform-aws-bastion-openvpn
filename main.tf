@@ -85,8 +85,9 @@ resource "aws_launch_template" "example" {
     bucket                   = aws_s3_bucket.openvpn_backup.bucket,
     eip                      = aws_eip.example.public_ip,
     eip_id                   = aws_eip.example.id,
-    region                   = data.aws_region.current.name,
+    region                   = data.aws_region.current.region,
     simultaneous_connections = local.simultaneous_connections,
+    push_routes              = local.push_routes,
     vpc_net                  = cidrhost(data.aws_vpc.main.cidr_block, 0),
     vpc_mask                 = cidrnetmask(data.aws_vpc.main.cidr_block),
   }))

@@ -12,6 +12,7 @@ module "ec2_bastion" {
     morning_recurrence = "0 9 * * 1-5"
     night_recurrence   = "0 18 * * 1-5"
   }
+  additional_cidrs = ["10.1.0.0/16", "10.2.0.0/16"]
 }
 
 output "private_key_pem" {

@@ -55,6 +55,9 @@ status openvpn-status.log
 log-append /var/log/openvpn.log
 verb 3
 push "route ${vpc_net} ${vpc_mask}"
+%{ for route in push_routes ~}
+${route}
+%{ endfor ~}
 ${simultaneous_connections}
 EOF
 
