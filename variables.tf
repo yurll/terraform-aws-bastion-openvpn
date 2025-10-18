@@ -65,3 +65,9 @@ variable "simultaneous_connections_enabled" {
   type        = bool
   default     = false
 }
+
+variable "additional_cidrs" {
+  description = "List of additional CIDR blocks to push to clients"
+  type        = list(string)
+  default     = []
+}
