@@ -34,6 +34,7 @@ This Terraform module deploys a self-healing Bastion server configured with Open
 |-----------------------|--------------------------------------------|
 | `private_key_pem`   | Generated private key data in PEM (RFC 1421) format |
 | `openvpn_security_group_id` | ID of the security group created for OpenVPN bastion host |
+| `openvpn_s3_bucket_name` | Name of the S3 bucket created for OpenVPN configuration storage |
 
 ## Usage
 ```hcl
