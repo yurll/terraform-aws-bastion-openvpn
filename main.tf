@@ -76,15 +76,15 @@ resource "aws_s3_bucket_policy" "openvpn_backup" {
   })
 }
 
-resource "aws_launch_template" "example" {
+resource "aws_launch_template" "bastion" {
   name          = "${local.effective_prefix}-ec2-scaling-lt"
   image_id      = data.aws_ami.ami.id
   instance_type = var.image_type
   key_name      = var.key_pair != null ? var.key_pair : aws_key_pair.generated[0].key_name
   user_data = base64encode(templatefile("${path.module}/user-data.sh.tftpl", {
     bucket                   = aws_s3_bucket.openvpn_backup.bucket,
-    eip                      = aws_eip.example.public_ip,
-    eip_id                   = aws_eip.example.id,
+    eip                      = aws_eip.bastion.public_ip,
+    eip_id                   = aws_eip.bastion.id,
     region                   = data.aws_region.current.region,
     simultaneous_connections = local.simultaneous_connections,
     push_routes              = local.push_routes,
@@ -103,13 +103,13 @@ resource "aws_launch_template" "example" {
   }
 }
 
-resource "aws_autoscaling_group" "example" {
+resource "aws_autoscaling_group" "bastion" {
   name             = "${local.effective_prefix}-ec2-asg"
   desired_capacity = 1
-  max_size         = 2
+  max_size         = 1
   min_size         = 1
   launch_template {
-    id      = aws_launch_template.example.id
+    id      = aws_launch_template.bastion.id
     version = "$Latest"
   }
 
@@ -124,7 +124,7 @@ resource "aws_autoscaling_group" "example" {
 
 resource "aws_autoscaling_schedule" "scale_up" {
   scheduled_action_name  = "scale-up-morning"
-  autoscaling_group_name = aws_autoscaling_group.example.name
+  autoscaling_group_name = aws_autoscaling_group.bastion.name
   count                  = var.scale_schedule["enabled"] == "true" ? 1 : 0
 
   min_size         = 1
@@ -135,7 +135,7 @@ resource "aws_autoscaling_schedule" "scale_up" {
 
 resource "aws_autoscaling_schedule" "scale_down" {
   scheduled_action_name  = "scale-down-night"
-  autoscaling_group_name = aws_autoscaling_group.example.name
+  autoscaling_group_name = aws_autoscaling_group.bastion.name
   count                  = var.scale_schedule["enabled"] == "true" ? 1 : 0
 
   min_size         = 0
@@ -144,7 +144,7 @@ resource "aws_autoscaling_schedule" "scale_down" {
   recurrence       = var.scale_schedule["night_recurrence"]
 }
 
-resource "aws_eip" "example" {
+resource "aws_eip" "bastion" {
   domain = "vpc"
   tags = {
     Name = "${local.effective_prefix}-eip"
